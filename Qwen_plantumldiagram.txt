@@ -1,0 +1,60 @@
+@startuml
+entity User {
+  id: String (PK)
+  email: String
+  name: String
+  birthDate: DateTime
+  gender: String
+  isVerified: Boolean
+}
+
+entity Photo {
+  id: String (PK)
+  url: String
+  isPrimary: Boolean
+  facialScore: Float
+}
+
+entity Location {
+  id: String (PK)
+  latitude: Float
+  longitude: Float
+}
+
+entity Like {
+  id: String (PK)
+  isSuperLike: Boolean
+}
+
+entity Match {
+  id: String (PK)
+  matchedAt: DateTime
+}
+
+entity ChatRoom {
+  id: String (PK)
+}
+
+entity Message {
+  id: String (PK)
+  content: String
+  isRead: Boolean
+}
+
+entity Subscription {
+  id: String (PK)
+  stripeId: String
+  status: String
+}
+
+User ||--o{ Photo : "1:N"
+User ||--|| Location : "1:1"
+User ||--o{ Like : "likesGiven"
+User ||--o{ Like : "likesReceived"
+User ||--o{ Match : "matches (user1)"
+User ||--o{ Match : "matches (user2)"
+User ||--o{ Message : "sent"
+Match ||--|| ChatRoom : "1:1"
+ChatRoom ||--o{ Message : "1:N"
+User ||--|| Subscription : "1:1"
+@enduml

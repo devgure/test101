@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://sparkr:password@db:5432/sparkr
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - db
+      - redis
+
+  web:
+    build: ./web
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+
+  mobile:
+    # Expo runs locally, but you can use EAS Build
+    build: ./mobile
+    ports:
+      - "19000:19000"
+    command: npx expo start --tunnel
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: sparkr
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: sparkr
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  ai-api:
+    build: ./ai/FastAPI
+    ports:
+      - "8001:8000"
+    environment:
+      - MODEL_PATH=/app/model.pkl
+
+volumes:
+  postgres_data:

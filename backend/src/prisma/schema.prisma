@@ -1,0 +1,118 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id              String     @id @default(cuid())
+  email           String     @unique
+  phone           String?    @unique
+  name            String
+  birthDate       DateTime
+  gender          String
+  genderPreference String?
+  bio             String?
+  photos          Photo[]
+  location        Location?
+  matches         Match[]     @relation("UserMatches")
+  likesGiven      Like[]      @relation("LikeSender")
+  likesReceived   Like[]      @relation("LikeReceiver")
+  chatMessages    Message[]   @relation("MessageSender")
+  subscription    Subscription?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  isVerified      Boolean    @default(false)
+  fcmToken        String?    // for push notifications
+  promoCode  String?   @unique
+
+}
+
+model Photo {
+  id        String   @id @default(cuid())
+  url       String
+  isPrimary Boolean  @default(false)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  facialScore Float? // AI-generated attractiveness score
+  createdAt DateTime @default(now())
+}
+
+model Location {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  latitude  Float
+  longitude Float
+  updatedAt DateTime @updatedAt
+}
+
+model Like {
+  id           String   @id @default(cuid())
+  senderId     String
+  receiverId   String
+  isSuperLike  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  sender       User     @relation("LikeSender", fields: [senderId], references: [id])
+  receiver     User     @relation("LikeReceiver", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
+}
+
+model Match {
+  id            String     @id @default(cuid())
+  user1Id       String
+  user2Id       String
+  user1         User       @relation("UserMatches", fields: [user1Id], references: [id])
+  user2         User       @relation("UserMatches", fields: [user2Id], references: [id])
+  matchedAt     DateTime   @default(now())
+  chatRoom      ChatRoom?
+  messages      Message[]
+  isActive      Boolean    @default(true)
+}
+
+model ChatRoom {
+  id        String    @id @default(cuid())
+  matchId   String    @unique
+  match     Match     @relation(fields: [matchId], references: [id])
+  messages  Message[]
+  createdAt DateTime  @default(now())
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  content     String
+  senderId    String
+  sender      User      @relation("MessageSender", fields: [senderId], references: [id])
+  chatRoomId  String
+  chatRoom    ChatRoom  @relation("messages", fields: [chatRoomId], references: [id])
+  isRead      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+}
+
+model Subscription {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  stripeId      String   @unique
+  status        String   // active, canceled, trialing
+  plan          String   // sparkr_plus
+  currentPeriodEnd DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  reporterId  String
+  reportedId  String
+  reason      String
+  details     String?
+  createdAt   DateTime @default(now())
+}
